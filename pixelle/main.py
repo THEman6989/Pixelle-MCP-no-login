@@ -21,6 +21,7 @@ from pixelle.middleware import StaticCacheMiddleware, HTMLCDNReplaceMiddleware, 
 # Modify chainlit config
 chainlit_config.run.host = settings.host
 chainlit_config.run.port = settings.port
+chainlit_config.auth_enabled = settings.enable_login
 
 # Access chainlit entry file path
 chainlit_entry_file = get_src_path("web/app.py")

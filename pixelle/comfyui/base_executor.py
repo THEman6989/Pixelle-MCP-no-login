@@ -21,6 +21,7 @@ from pixelle.comfyui.workflow_parser import WorkflowParser, WorkflowMetadata
 from pixelle.comfyui.models import ExecuteResult
 from pixelle.utils.os_util import get_data_path
 from pixelle.settings import settings
+from pixelle.utils.network_whitelist import is_url_allowed # Import the whitelist utility
 
 # Configuration variables
 COMFYUI_BASE_URL = settings.comfyui_base_url
@@ -63,6 +64,9 @@ class ComfyUIExecutor(ABC):
             
             # Check if it is an HTTP URL
             if content.startswith(('http://', 'https://')):
+                if not is_url_allowed(content):
+                    logger.warning(f"Blocking access to disallowed cookie URL: {content}")
+                    raise Exception(f"Access to cookie URL {content} is not allowed by whitelist.")
                 async with aiohttp.ClientSession() as session:
                     async with session.get(content) as response:
                         if response.status != 200:
@@ -236,6 +240,9 @@ class ComfyUIExecutor(ABC):
 
     async def _upload_media_from_source(self, media_url: str) -> str:
         """Upload media from URL"""
+        if not is_url_allowed(media_url):
+            logger.warning(f"Blocking access to disallowed media URL: {media_url}")
+            raise Exception(f"Access to media URL {media_url} is not allowed by whitelist.")
         async with self.get_comfyui_session() as session:
             async with session.get(media_url) as response:
                 if response.status != 200:

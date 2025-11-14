@@ -29,6 +29,14 @@ class Settings(BaseSettings):
     port: int = 9004
     public_read_url: Optional[str] = None
     local_storage_path: str = "files"
+
+    # Network configuration
+    allowed_hosts: str = "" # Comma separated list of allowed hosts (IPs or hostnames)
+
+    # Authentication configuration
+    enable_login: bool = True
+    default_user: str = "admin"
+    default_password: str = "changeme"
     
     # ComfyUI integration configuration
     comfyui_base_url: str = "http://localhost:8188"

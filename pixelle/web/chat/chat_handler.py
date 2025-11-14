@@ -10,6 +10,7 @@ from typing import Any, Dict, List
 from mcp import ClientSession
 import re
 from pixelle.web.utils.llm_util import ModelInfo, ModelType
+from pixelle.utils.network_whitelist import is_url_allowed # Import the whitelist utility
 
 from litellm import acompletion
 
@@ -366,6 +367,15 @@ async def _handle_response(model_info, api_params, enhanced_messages, messages):
     has_tool_call = False
     
     try:
+        # Before making the acompletion call, check if the model's base_url is allowed
+        if model_info.base_url and not is_url_allowed(model_info.base_url):
+            error_message = f"Blocking access to disallowed LLM base URL: {model_info.base_url}"
+            logger.warning(error_message)
+            await msg.stream_token(f"\n{error_message}\n")
+            await _process_media_markers(msg)
+            await msg.send()
+            return messages, False # End processing
+
         # Prepare LiteLLM parameters - directly pass all necessary parameters
         litellm_params = {
             "model": f"{model_info.provider}/{model_info.model}",

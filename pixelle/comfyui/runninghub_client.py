@@ -10,6 +10,7 @@ import asyncio
 
 from pixelle.logger import logger
 from pixelle.settings import settings
+from pixelle.utils.network_whitelist import is_url_allowed # Import the whitelist utility
 
 
 class RunningHubClient:
@@ -28,6 +29,11 @@ class RunningHubClient:
                           files: Optional[Dict] = None, timeout: Optional[int] = None) -> Dict[str, Any]:
         """Make HTTP request to RunningHub API with retry logic"""
         url = f"{self.base_url}{endpoint}"
+
+        if not is_url_allowed(url):
+            logger.warning(f"Blocking access to disallowed RunningHub URL: {url}")
+            raise Exception(f"Access to RunningHub URL {url} is not allowed by whitelist.")
+
         headers = {}
         
         # Prepare request data

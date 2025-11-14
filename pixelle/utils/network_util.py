@@ -2,12 +2,17 @@ import requests
 from urllib.parse import urljoin
 from typing import List
 
+from pixelle.utils.network_whitelist import is_url_allowed, reload_whitelist
+from pixelle.logger import logger
 
 def check_url_status(url: str, timeout: int = 5) -> bool:
     """Return True if the URL is reachable (HTTP 200), otherwise False.
 
     This function is non-interactive and silent; callers handle messaging.
     """
+    if not is_url_allowed(url):
+        logger.warning(f"Blocking access to disallowed URL: {url}")
+        return False
     try:
         response = requests.get(url, timeout=timeout)
         return response.status_code == 200
@@ -16,6 +21,9 @@ def check_url_status(url: str, timeout: int = 5) -> bool:
 
 
 def check_mcp_streamable(url: str, timeout: int = 5) -> bool:
+    if not is_url_allowed(url):
+        logger.warning(f"Blocking access to disallowed MCP streamable URL: {url}")
+        return False
     init_payload = {
         "jsonrpc": "2.0",
         "method": "initialize",
@@ -40,6 +48,9 @@ def check_mcp_streamable(url: str, timeout: int = 5) -> bool:
 
 def test_comfyui_connection(url: str) -> bool:
     """Test ComfyUI connectivity using /system_stats endpoint."""
+    if not is_url_allowed(url):
+        logger.warning(f"Blocking access to disallowed ComfyUI URL: {url}")
+        return False
     try:
         response = requests.get(urljoin(url, "/system_stats"), timeout=3)
         return response.status_code == 200
@@ -52,6 +63,9 @@ def test_ollama_connection(base_url: str) -> bool:
 
     Accepts either base_url with or without "/v1" suffix.
     """
+    if not is_url_allowed(base_url):
+        logger.warning(f"Blocking access to disallowed Ollama URL: {base_url}")
+        return False
     try:
         test_url = base_url.replace("/v1", "")
         response = requests.get(f"{test_url}/api/tags", timeout=5)
@@ -65,6 +79,9 @@ def get_openai_models(api_key: str, base_url: str) -> List[str]:
 
     Returns all available models without filtering, letting users choose themselves.
     """
+    if not is_url_allowed(base_url):
+        logger.warning(f"Blocking access to disallowed OpenAI base URL: {base_url}")
+        return []
     try:
         headers = {"Authorization": f"Bearer {api_key}"}
         response = requests.get(f"{base_url}/models", headers=headers, timeout=10)
@@ -86,6 +103,9 @@ def get_openai_models(api_key: str, base_url: str) -> List[str]:
 
 def get_ollama_models(base_url: str) -> List[str]:
     """Fetch available Ollama models from /api/tags; returns list of names."""
+    if not is_url_allowed(base_url):
+        logger.warning(f"Blocking access to disallowed Ollama base URL: {base_url}")
+        return []
     try:
         test_url = base_url.replace("/v1", "")
         response = requests.get(f"{test_url}/api/tags", timeout=5)

@@ -11,6 +11,7 @@ import uuid
 from pixelle.logger import logger
 from pixelle.settings import settings
 from pixelle.utils.os_util import get_data_path
+from pixelle.utils.network_whitelist import is_url_allowed
 
 class LocalFileUploader:
     
@@ -81,6 +82,9 @@ class LocalFileUploader:
             # check if it is URL or file path
             if data_str.startswith(('http://', 'https://')):
                 # it is URL, download content
+                if not is_url_allowed(data_str):
+                    logger.warning(f"Blocking download from disallowed URL: {data_str}")
+                    raise Exception(f"Download from URL {data_str} is not allowed by whitelist.")
                 response = requests.get(data_str, timeout=30)
                 response.raise_for_status()
                 file_content = response.content
